@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asisten Pinjaman - Putri</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 500px;
+            height: 600px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.bot {
+            text-align: left;
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message-content {
+            display: inline-block;
+            padding: 12px 18px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-input-container {
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #userInput:focus {
+            border-color: #667eea;
+        }
+
+        #userInput:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        #sendBtn {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #sendBtn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #sendBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .typing-indicator {
+            display: inline-block;
+            padding: 12px 18px;
+            background: white;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background: #999;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .loan-details {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            line-height: 1.8;
+            font-size: 14px;
+        }
+
+        .loan-details strong {
+            color: #667eea;
+        }
+
+        .status-message {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 10px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            💬 Asisten Pinjaman
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will appear here -->
+        </div>
+        <div class="chat-input-container">
+            <input type="text" id="userInput" placeholder="Ketik pesan..." disabled>
+            <button id="sendBtn" disabled>Kirim</button>
+        </div>
+    </div>
+
+    <script>
+        class LoanChatbot {
+            constructor() {
+                this.chatMessages = document.getElementById('chatMessages');
+                this.userInput = document.getElementById('userInput');
+                this.sendBtn = document.getElementById('sendBtn');
+                this.currentStep = 0;
+                this.timeoutId = null;
+                this.reminderTimeoutId = null;
+                this.userName = 'Putri';
+                this.loanData = {
+                    amount: 0,
+                    tenor: 6, // default tenor
+                    upfrontFee: 0,
+                    netDisbursement: 0,
+                    monthlyInstallment: 0,
+                    totalRepayment: 0,
+                    maxDailyCost: 0
+                };
+
+                this.setupEventListeners();
+                this.start();
+            }
+
+            setupEventListeners() {
+                this.sendBtn.addEventListener('click', () => this.handleUserInput());
+                this.userInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleUserInput();
+                });
+            }
+
+            start() {
+                setTimeout(() => {
+                    this.addBotMessage(`Hai ${this.userName} 👋 Aku bantu atur detail pinjaman kamu ya. Kita mulai supaya aku bisa hitungkan rincian pencairannya. Siap?`);
+                    this.enableInput();
+                    this.currentStep = 1;
+                    this.startTimeout(30000, 180000); // 30s reminder, 3min exit
+                }, 1000);
+            }
+
+            addBotMessage(message) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message bot';
+                messageDiv.innerHTML = `<div class="message-content">${message}</div>`;
+                this.chatMessages.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+
+            addUserMessage(message) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message user';
+                messageDiv.innerHTML = `<div class="message-content">${message}</div>`;
+                this.chatMessages.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+
+            showTypingIndicator() {
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'message bot';
+                typingDiv.id = 'typing-indicator';
+                typingDiv.innerHTML = `
+                    <div class="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                `;
+                this.chatMessages.appendChild(typingDiv);
+                this.scrollToBottom();
+            }
+
+            hideTypingIndicator() {
+                const typingIndicator = document.getElementById('typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+            }
+
+            scrollToBottom() {
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            }
+
+            enableInput() {
+                this.userInput.disabled = false;
+                this.sendBtn.disabled = false;
+                this.userInput.focus();
+            }
+
+            disableInput() {
+                this.userInput.disabled = true;
+                this.sendBtn.disabled = true;
+            }
+
+            clearTimeouts() {
+                if (this.timeoutId) clearTimeout(this.timeoutId);
+                if (this.reminderTimeoutId) clearTimeout(this.reminderTimeoutId);
+            }
+
+            startTimeout(reminderMs, exitMs) {
+                this.clearTimeouts();
+                
+                // 30 second reminder
+                this.reminderTimeoutId = setTimeout(() => {
+                    this.showTypingIndicator();
+                    setTimeout(() => {
+                        this.hideTypingIndicator();
+                        this.addBotMessage("Kamu belum menjawab. Aku tunggu ya 😊");
+                        
+                        if (this.currentStep === 1) {
+                            setTimeout(() => {
+                                this.addBotMessage("Kalau siap, kita mulai dari jumlah pinjaman.");
+                            }, 1000);
+                        }
+                    }, 800);
+                }, reminderMs);
+
+                // 3 minute exit
+                this.timeoutId = setTimeout(() => {
+                    this.showTypingIndicator();
+                    setTimeout(() => {
+                        this.hideTypingIndicator();
+                        this.addBotMessage("Kalau belum siap sekarang, kamu bisa lanjut kapan saja.");
+                        this.disableInput();
+                        this.currentStep = -1; // Exit state
+                    }, 800);
+                }, exitMs);
+            }
+
+            handleUserInput() {
+                const input = this.userInput.value.trim();
+                if (!input) return;
+
+                this.addUserMessage(input);
+                this.userInput.value = '';
+                this.disableInput();
+                this.clearTimeouts();
+
+                this.processInput(input);
+            }
+
+            processInput(input) {
+                this.showTypingIndicator();
+
+                setTimeout(() => {
+                    this.hideTypingIndicator();
+
+                    switch(this.currentStep) {
+                        case 1:
+                            this.handleReadinessResponse(input);
+                            break;
+                        case 2:
+                            this.handleLoanAmountResponse(input);
+                            break;
+                        case 3:
+                            this.handleClarityResponse(input);
+                            break;
+                        case 4:
+                            this.handleClarificationRequest(input);
+                            break;
+                    }
+                }, 1000);
+            }
+
+            handleReadinessResponse(input) {
+                const normalizedInput = input.toLowerCase();
+                const readyWords = ['ya', 'yes', 'siap', 'oke', 'ok'];
+                
+                if (readyWords.some(word => normalizedInput.includes(word))) {
+                    this.addBotMessage("Berapa jumlah pinjaman yang kamu butuhkan?");
+                    this.currentStep = 2;
+                    this.enableInput();
+                    this.startTimeout(30000, 180000);
+                } else {
+                    this.addBotMessage("Maaf, aku belum mengerti. Ketik 'Ya' atau 'Siap' untuk mulai.");
+                    this.enableInput();
+                    this.startTimeout(30000, 180000);
+                }
+            }
+
+            parseAmount(input) {
+                const normalizedInput = input.toLowerCase().replace(/\./g, '').replace(/,/g, '');
+                
+                // Handle written numbers
+                const numberWords = {
+                    'lima': 5, 'enam': 6, 'tujuh': 7, 'delapan': 8, 'sembilan': 9, 'sepuluh': 10
+                };
+
+                let amount = 0;
+
+                // Check for "juta"
+                if (normalizedInput.includes('juta')) {
+                    for (const [word, value] of Object.entries(numberWords)) {
+                        if (normalizedInput.includes(word)) {
+                            amount = value * 1000000;
+                            break;
+                        }
+                    }
+                    
+                    // Check for numeric with "juta"
+                    const numMatch = normalizedInput.match(/(\d+)\s*juta/);
+                    if (numMatch) {
+                        amount = parseInt(numMatch[1]) * 1000000;
+                    }
+                }
+
+                // Check for pure numbers
+                const pureNumber = normalizedInput.match(/\d+/);
+                if (pureNumber && amount === 0) {
+                    amount = parseInt(pureNumber[0]);
+                }
+
+                return amount;
+            }
+
+            handleLoanAmountResponse(input) {
+                const amount = this.parseAmount(input);
+                
+                if (amount >= 500000 && amount <= 10000000) {
+                    this.loanData.amount = amount;
+                    this.calculateLoanDetails();
+                    this.showLoanDetails();
+                    this.currentStep = 3;
+                    this.enableInput();
+                    // No timeout for this step as we're waiting for confirmation
+                } else if (amount > 0) {
+                    this.addBotMessage("Jumlah pinjaman harus antara Rp 500.000 dan Rp 10.000.000. Coba lagi ya.");
+                    this.enableInput();
+                    this.startTimeout(30000, 180000);
+                } else {
+                    this.addBotMessage("Maaf, aku belum mengerti jumlahnya. Bisa tulis dalam angka atau kata? Contoh: '5 juta' atau '5000000'");
+                    this.enableInput();
+                    this.startTimeout(30000, 180000);
+                }
+            }
+
+            calculateLoanDetails() {
+                const amount = this.loanData.amount;
+                const tenor = this.loanData.tenor;
+                
+                // Sample calculation (adjust based on actual business logic)
+                this.loanData.upfrontFee = Math.round(amount * 0.05); // 5% upfront fee
+                this.loanData.netDisbursement = amount - this.loanData.upfrontFee;
+                this.loanData.totalRepayment = Math.round(amount * 1.15); // 15% total interest
+                this.loanData.monthlyInstallment = Math.round(this.loanData.totalRepayment / tenor);
+                this.loanData.maxDailyCost = Math.round((this.loanData.totalRepayment - amount) / (tenor * 30));
+            }
+
+            formatCurrency(amount) {
+                return new Intl.NumberFormat('id-ID').format(amount);
+            }
+
+            showLoanDetails() {
+                const details = `
+                    Ini rincian pinjaman kamu 👇
+                    <div class="loan-details">
+                        <strong>Jumlah pinjaman:</strong> Rp ${this.formatCurrency(this.loanData.amount)}<br>
+                        <strong>Biaya awal:</strong> Rp ${this.formatCurrency(this.loanData.upfrontFee)}<br>
+                        <strong>Pencairan:</strong> Rp ${this.formatCurrency(this.loanData.netDisbursement)}<br>
+                        <strong>Cicilan:</strong> Rp ${this.formatCurrency(this.loanData.monthlyInstallment)} / bulan selama ${this.loanData.tenor} bulan<br>
+                        <strong>Total pengembalian:</strong> Rp ${this.formatCurrency(this.loanData.totalRepayment)}<br>
+                        <strong>Maks biaya per hari:</strong> Rp ${this.formatCurrency(this.loanData.maxDailyCost)}
+                    </div>
+                    <br>
+                    Apakah sudah jelas? Jika belum, bagian mana yang belum jelas?
+                `;
+                this.addBotMessage(details);
+            }
+
+            handleClarityResponse(input) {
+                const normalizedInput = input.toLowerCase();
+                const clearWords = ['sudah', 'jelas', 'mengerti', 'ya', 'oke', 'ok', 'paham'];
+                const unclearWords = ['tidak', 'belum', 'kurang', 'gak'];
+                
+                if (clearWords.some(word => normalizedInput.includes(word)) && 
+                    !unclearWords.some(word => normalizedInput.includes(word))) {
+                    this.addBotMessage("Lanjutkan Pengajuan");
+                    setTimeout(() => {
+                        this.addBotMessage("Terima kasih! Pengajuan pinjaman kamu sedang diproses. 🎉");
+                        this.disableInput();
+                        this.currentStep = -1; // Finish
+                    }, 1500);
+                } else if (unclearWords.some(word => normalizedInput.includes(word))) {
+                    this.addBotMessage("Bagian mana yang kamu belum mengerti?");
+                    this.currentStep = 4;
+                    this.enableInput();
+                } else {
+                    this.addBotMessage("Maaf, aku belum mengerti. Ketik 'Sudah' jika jelas, atau 'Belum' jika ada yang perlu dijelaskan.");
+                    this.enableInput();
+                }
+            }
+
+            handleClarificationRequest(input) {
+                const normalizedInput = input.toLowerCase();
+                let explanation = '';
+
+                if (normalizedInput.includes('biaya awal')) {
+                    explanation = `<strong>Biaya Awal</strong> adalah biaya administrasi yang dipotong di awal dari jumlah pinjaman. 
+                    Biaya ini sebesar Rp ${this.formatCurrency(this.loanData.upfrontFee)} akan dipotong sebelum uang ditransfer ke rekening kamu.`;
+                } else if (normalizedInput.includes('pencairan')) {
+                    explanation = `<strong>Pencairan</strong> adalah jumlah uang yang benar-benar akan kamu terima di rekening. 
+                    Ini adalah jumlah pinjaman dikurangi biaya awal: Rp ${this.formatCurrency(this.loanData.amount)} - Rp ${this.formatCurrency(this.loanData.upfrontFee)} = Rp ${this.formatCurrency(this.loanData.netDisbursement)}.`;
+                } else if (normalizedInput.includes('cicilan')) {
+                    explanation = `<strong>Cicilan</strong> adalah jumlah yang harus kamu bayar setiap bulan. 
+                    Kamu akan membayar Rp ${this.formatCurrency(this.loanData.monthlyInstallment)} per bulan selama ${this.loanData.tenor} bulan.`;
+                } else if (normalizedInput.includes('max') || normalizedInput.includes('biaya per hari')) {
+                    explanation = `<strong>Maks Biaya Per Hari</strong> adalah estimasi biaya harian maksimal yang kamu bayar. 
+                    Ini dihitung dari total bunga dibagi jumlah hari pinjaman, yaitu sekitar Rp ${this.formatCurrency(this.loanData.maxDailyCost)} per hari.`;
+                } else {
+                    explanation = "Maaf, aku belum mengerti bagian mana yang ingin dijelaskan. Coba sebutkan salah satu: biaya awal, pencairan, cicilan, atau max biaya per hari.";
+                    this.addBotMessage(explanation);
+                    this.enableInput();
+                    return;
+                }
+
+                this.addBotMessage(explanation);
+                setTimeout(() => {
+                    this.addBotMessage("Apakah sekarang sudah jelas?");
+                    this.currentStep = 3;
+                    this.enableInput();
+                }, 1500);
+            }
+        }
+
+        // Initialize chatbot when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            new LoanChatbot();
+        });
+    </script>
+</body>
+</html>

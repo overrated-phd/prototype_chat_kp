@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asisten Pinjaman - Putri</title>
+    <title>Kredit Pintar - Asisten Pinjaman</title>
     <style>
         * {
             margin: 0;
@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -34,7 +34,7 @@
         }
 
         .chat-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #6abe45 0%, #5aa639 100%);
             color: white;
             padding: 20px;
             text-align: center;
@@ -46,7 +46,7 @@
             flex: 1;
             overflow-y: auto;
             padding: 20px;
-            background: #f5f5f5;
+            background: #f0f0f0;
         }
 
         .message {
@@ -82,14 +82,15 @@
         }
 
         .message.bot .message-content {
-            background: white;
-            color: #333;
+            background: #ffffff;
+            color: #2d2d2d;
             border-bottom-left-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e0e0e0;
         }
 
         .message.user .message-content {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #6abe45 0%, #5aa639 100%);
             color: white;
             border-bottom-right-radius: 4px;
         }
@@ -113,7 +114,7 @@
         }
 
         #userInput:focus {
-            border-color: #667eea;
+            border-color: #6abe45;
         }
 
         #userInput:disabled {
@@ -123,7 +124,7 @@
 
         #sendBtn {
             padding: 12px 25px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #6abe45 0%, #5aa639 100%);
             color: white;
             border: none;
             border-radius: 25px;
@@ -135,7 +136,7 @@
 
         #sendBtn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(106, 190, 69, 0.4);
         }
 
         #sendBtn:disabled {
@@ -146,16 +147,17 @@
         .typing-indicator {
             display: inline-block;
             padding: 12px 18px;
-            background: white;
+            background: #ffffff;
             border-radius: 18px;
             border-bottom-left-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e0e0e0;
         }
 
         .typing-indicator span {
             height: 8px;
             width: 8px;
-            background: #999;
+            background: #6abe45;
             border-radius: 50%;
             display: inline-block;
             margin: 0 2px;
@@ -180,21 +182,22 @@
         }
 
         .loan-details {
-            background: #f9f9f9;
+            background: #e8e8e8;
             padding: 15px;
             border-radius: 10px;
             margin-top: 10px;
             line-height: 1.8;
             font-size: 14px;
+            border-left: 4px solid #6abe45;
         }
 
         .loan-details strong {
-            color: #667eea;
+            color: #5aa639;
         }
 
         .status-message {
             text-align: center;
-            color: #999;
+            color: #777;
             font-size: 12px;
             margin-top: 10px;
             font-style: italic;
@@ -204,7 +207,7 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            💬 Asisten Pinjaman
+            💬 Kredit Pintar - Asisten Pinjaman
         </div>
         <div class="chat-messages" id="chatMessages">
             <!-- Messages will appear here -->
